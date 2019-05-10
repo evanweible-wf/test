@@ -381,7 +381,7 @@ class Invoker {
     var outstandingCallbacksForBody = OutstandingCallbackCounter();
 
     _runCount++;
-    Chain.capture(() {
+    // Chain.capture(() {
       _guardIfGuarded(() {
         runZoned(() async {
           _invokerZone = Zone.current;
@@ -427,7 +427,7 @@ class Invoker {
             zoneSpecification:
                 ZoneSpecification(print: (_, __, ___, line) => _print(line)));
       });
-    }, when: liveTest.test.metadata.chainStackTraces, errorZone: false);
+    // }, when: liveTest.test.metadata.chainStackTraces, errorZone: false);
   }
 
   /// Runs [callback], in a [Invoker.guard] context if [_guarded] is `true`.
