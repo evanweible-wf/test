@@ -44,6 +44,10 @@ dev_dependencies:
 
 dependency_overrides:
   test_api:
-    path: ./../test_api
+    git:
+      url: git@github.com:evanweible-wf/test.git
+      ref: 04af377a5d1d0ca6086dcfcc972f353ad8bf0c27 # test_api_no_capture
+      path: pkgs/test_api
+    # path: ./../test_api
   test_core:
     path: ./../test_core
