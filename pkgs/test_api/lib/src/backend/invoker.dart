@@ -381,53 +381,51 @@ class Invoker {
     var outstandingCallbacksForBody = OutstandingCallbackCounter();
 
     _runCount++;
-    Chain.capture(() {
-      _guardIfGuarded(() {
-        runZoned(() async {
-          _invokerZone = Zone.current;
-          _outstandingCallbackZones.add(Zone.current);
+    _guardIfGuarded(() {
+      runZoned(() async {
+        _invokerZone = Zone.current;
+        _outstandingCallbackZones.add(Zone.current);
 
-          // Run the test asynchronously so that the "running" state change
-          // has a chance to hit its event handler(s) before the test produces
-          // an error. If an error is emitted before the first state change is
-          // handled, we can end up with [onError] callbacks firing before the
-          // corresponding [onStateChange], which violates the timing
-          // guarantees.
-          //
-          // Using [new Future] also avoids starving the DOM or other
-          // microtask-level events.
-          unawaited(Future(() async {
-            await _test._body();
-            await unclosable(_runTearDowns);
-            removeOutstandingCallback();
-          }));
+        // Run the test asynchronously so that the "running" state change
+        // has a chance to hit its event handler(s) before the test produces
+        // an error. If an error is emitted before the first state change is
+        // handled, we can end up with [onError] callbacks firing before the
+        // corresponding [onStateChange], which violates the timing
+        // guarantees.
+        //
+        // Using [new Future] also avoids starving the DOM or other
+        // microtask-level events.
+        unawaited(Future(() async {
+          await _test._body();
+          await unclosable(_runTearDowns);
+          removeOutstandingCallback();
+        }));
 
-          await _outstandingCallbacks.noOutstandingCallbacks;
-          if (_timeoutTimer != null) _timeoutTimer.cancel();
+        await _outstandingCallbacks.noOutstandingCallbacks;
+        if (_timeoutTimer != null) _timeoutTimer.cancel();
 
-          if (liveTest.state.result != Result.success &&
-              _runCount < liveTest.test.metadata.retry + 1) {
-            _controller.message(Message.print("Retry: ${liveTest.test.name}"));
-            _onRun();
-            return;
-          }
+        if (liveTest.state.result != Result.success &&
+            _runCount < liveTest.test.metadata.retry + 1) {
+          _controller.message(Message.print("Retry: ${liveTest.test.name}"));
+          _onRun();
+          return;
+        }
 
-          _controller.setState(State(Status.complete, liveTest.state.result));
+        _controller.setState(State(Status.complete, liveTest.state.result));
 
-          _controller.completer.complete();
-        },
-            zoneValues: {
-              #test.invoker: this,
-              // Use the invoker as a key so that multiple invokers can have
-              // different outstanding callback counters at once.
-              _counterKey: outstandingCallbacksForBody,
-              _closableKey: true,
-              #runCount: _runCount,
-            },
-            zoneSpecification:
-                ZoneSpecification(print: (_, __, ___, line) => _print(line)));
-      });
-    }, when: liveTest.test.metadata.chainStackTraces, errorZone: false);
+        _controller.completer.complete();
+      },
+          zoneValues: {
+            #test.invoker: this,
+            // Use the invoker as a key so that multiple invokers can have
+            // different outstanding callback counters at once.
+            _counterKey: outstandingCallbacksForBody,
+            _closableKey: true,
+            #runCount: _runCount,
+          },
+          zoneSpecification:
+              ZoneSpecification(print: (_, __, ___, line) => _print(line)));
+    });
   }
 
   /// Runs [callback], in a [Invoker.guard] context if [_guarded] is `true`.
